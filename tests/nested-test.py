@@ -181,6 +181,46 @@ hl.config({ animations = { enabled = false }, input = { follow_mouse = 1, touchp
     ctl('plugin', 'load', str(lib)); time.sleep(.2)
     _, after, _ = gesture(plog, ['stop 0'])
     check('reload of plugin works again', len(after) >= 5, f'({len(after)})')
+    def spin(app_log, notches, gap, tail=()):
+      """Wheel notches `gap` ms apart; returns (real, coast) axis events."""
+      drive(['move 600 380', 'wait 30', 'move 640 400', 'wait 150'])
+      mark = len(app_log.read_text().splitlines())
+      cmds = []
+      for n in range(notches):
+        cmds.append('wheel 1')
+        if n < notches - 1: cmds.append(f'wait {gap}')
+      drive(cmds + list(tail))
+      time.sleep(1.3)
+      lines = app_log.read_text().splitlines()[mark:]
+      axis = [l for l in lines if ' axis 0 ' in l and float(l.split()[3]) != 0]
+      return axis[:notches], axis[notches:], lines
+
+    real, coast, _ = spin(plog, 6, 15)
+    check('mouse wheel: no coast while the mouse option is off (default)', len(real) == 6 and len(coast) == 0, f'({len(real)} notches, {len(coast)} extra)')
+    ctl('eval', 'hl.config({ plugin = { inertia = { mouse = true } } })')
+    real, coast, lines = spin(plog, 6, 15)
+    vals = [float(l.split()[3]) for l in coast]
+    check('mouse wheel: a fast spin coasts', len(coast) >= 5, f'({len(coast)} events, total {sum(vals):.0f})')
+    check('mouse wheel: coast slows down and keeps direction', len(vals) >= 3 and all(v > 0 for v in vals) and vals[-1] < vals[0])
+    check('mouse wheel: coast is sent as continuous scrolling', 'source 2' in '\n'.join(lines))
+    _, coast, _ = spin(plog, 6, 120)
+    check('mouse wheel: a slow spin just stops', len(coast) == 0, f'({len(coast)} extra)')
+    _, coast, _ = spin(plog, 1, 0)
+    check('mouse wheel: a single notch does not coast', len(coast) == 0, f'({len(coast)} extra)')
+    _, coast, _ = spin(plog, 6, 15, ['wait 90', 'move 660 420', 'wait 20', 'move 670 430'])
+    ts = [float(l.split()[0]) for l in coast]
+    check('mouse wheel: moving the mouse does not cut the coast', len(coast) >= 5 and (ts[-1] - ts[0]) > 150, f'({len(coast)} events, {(ts[-1]-ts[0]) if ts else 0:.0f} ms)')
+    real, coast, _ = spin(plog, 6, 15, ['wait 90', 'wheel -1'])
+    check('mouse wheel: turning back cancels the coast', len(coast) <= 6, f'({len(coast)} extra)')
+    ctl('eval', 'hl.config({ plugin = { inertia = { touchpad = false } } })')
+    _, after, _ = gesture(plog, ['stop 0'])
+    check('touchpad option off: no touchpad coast', len(after) == 0, f'({len(after)})')
+    ctl('reload'); time.sleep(.4)
+    _, after, _ = gesture(plog, ['stop 0'])
+    check('options return to defaults on reload: touchpad coasts again', len(after) >= 5, f'({len(after)})')
+    _, coast, _ = spin(plog, 6, 15)
+    check('options return to defaults on reload: mouse off again', len(coast) == 0, f'({len(coast)})')
+
     ctl('plugin', 'unload', str(lib))
 
     # Omarchy's toggle: the config asks for the plugin while a flag file exists.

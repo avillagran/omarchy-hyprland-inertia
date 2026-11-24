@@ -60,5 +60,19 @@ int main() {
     for (int i = 0; i < 12; ++i) stall.sample(8, 8);
     stall.release(10);
     check(stall.tick(500) == 0 && !stall.active, "a stalled event loop ends the coast instead of jumping");
+    Momentum single;
+    single.sample(15, 20);
+    single.release(10);
+    check(!single.active, "a single event (one wheel notch) does not coast");
+
+    Momentum fastWheel, slowWheel;
+    fastWheel.tau = slowWheel.tau = 220;
+    for (int i = 0; i < 6; ++i) fastWheel.sample(15, 15, 150);
+    for (int i = 0; i < 6; ++i) slowWheel.sample(15, 120, 150);
+    check(fastWheel.velocity > 0.25 && slowWheel.velocity < 0.25, "wheel velocity tells a fast spin from a slow one");
+    fastWheel.release(60);
+    Momentum touch = fastWheel;
+    touch.tau = 140;
+    check(coast(fastWheel) > coast(touch), "a longer tau carries further");
     return failures ? EXIT_FAILURE : EXIT_SUCCESS;
 }

@@ -1,26 +1,44 @@
 # omarchy-hyprland-inertia
 
-Touchpad inertia for [Omarchy](https://omarchy.org). Swipe with two fingers
+Scroll inertia for [Omarchy](https://omarchy.org). Swipe with two fingers
 and lift them: the page keeps scrolling for up to 0.8 s and slows down, the
-way it does on macOS.
+way it does on macOS. Optionally, a fast mouse-wheel spin coasts the same way.
 
 It is a small Hyprland plugin. It does not replace Hyprland or hook its
 functions. It listens to Hyprland's input events and, after the fingers lift,
 sends the window under the pointer a few more scroll frames.
 
-- Only touchpad (finger) scrolling. Mouse wheels are untouched.
-- Coasting starts only when the touchpad reports that the fingers lifted, and
-  stops when you touch the pad again, move the pointer, click, type or switch
-  windows.
+- Touchpad: coasting starts only when the touchpad reports that the fingers
+  lifted, and stops when you touch the pad again, move the pointer, click,
+  type or switch windows.
+- Mouse wheel (off by default): a fast spin coasts once the wheel stops for
+  60 ms. A single notch or a slow, careful scroll stops exactly where it is.
+  Turning the wheel back, clicking, typing or switching windows stops it;
+  moving the mouse does not.
 - Browsers and terminals keep their own inertia (Firefox, Chromium, Brave,
   Vivaldi, LibreWolf, Zen, kitty, Alacritty, foot, Ghostty).
-- Scroll speed follows `input:touchpad:scroll_factor`.
+- Scroll speed follows `input:touchpad:scroll_factor` and `input:scroll_factor`.
+
+## Options
+
+| Option | Default | |
+|---|---|---|
+| `plugin:inertia:touchpad` | `true` | coast after a two-finger touchpad scroll |
+| `plugin:inertia:mouse` | `false` | coast after a fast mouse-wheel spin |
+
+```lua
+hl.config({ plugin = { inertia = { mouse = true } } })
+```
+
+Like any plugin option, they return to these defaults on every config reload,
+so set them in the config, after the plugin is loaded.
 
 ## Use in Omarchy
 
-Omarchy installs the package and offers **Setup > Touchpad > Inertia**. The
-switch loads the plugin from `/usr/lib/omarchy-hyprland-inertia/inertia.so`
-through the Hyprland config, and turning it off unloads it on the next config
+Omarchy installs the package and offers **Setup > Scrolling**, with
+**Touchpad Inertia** and **Mouse Wheel Inertia**. They load the plugin from
+`/usr/lib/omarchy-hyprland-inertia/inertia.so` through the Hyprland config and
+set its options; with both off, the plugin is unloaded on the next config
 reload.
 
 To load it by hand:
@@ -51,8 +69,8 @@ python3 -I tests/nested-test.py
 
 `momentum-test` checks the coast curve. `nested-test.py` runs inside a
 Hyprland session: it starts a disposable nested Hyprland (a window appears for
-about a minute), loads the plugin there only, and simulates touchpad scrolling
-with `zwlr_virtual_pointer_v1`. A nested Hyprland receives the parent's real
+about a minute), loads the plugin there only, and simulates touchpad and
+mouse-wheel scrolling with `zwlr_virtual_pointer_v1`. A nested Hyprland receives the parent's real
 touchpad scroll as a wheel, so a real touchpad cannot be tested that way.
 
 ## License
