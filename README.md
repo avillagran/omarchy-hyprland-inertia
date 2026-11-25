@@ -1,7 +1,7 @@
 # omarchy-hyprland-inertia
 
 Scroll inertia for [Omarchy](https://omarchy.org). Swipe with two fingers
-and lift them: the page keeps scrolling for up to 0.8 s and slows down, the
+and lift them: the page keeps scrolling for up to 0.8 s (adjustable) and slows down, the
 way it does on macOS. Optionally, a fast mouse-wheel spin coasts the same way.
 
 It is a small Hyprland plugin. It does not replace Hyprland or hook its
@@ -15,8 +15,10 @@ sends the window under the pointer a few more scroll frames.
   60 ms. A single notch or a slow, careful scroll stops exactly where it is.
   Turning the wheel back, clicking, typing or switching windows stops it;
   moving the mouse does not.
-- Browsers and terminals keep their own inertia (Firefox, Chromium, Brave,
-  Vivaldi, LibreWolf, Zen, kitty, Alacritty, foot, Ghostty).
+- Browsers keep their own touchpad fling (Firefox, Chromium, Chrome, Brave,
+  Vivaldi, LibreWolf, Zen), unless `all_apps` is on. They have no wheel
+  inertia, so the mouse wheel coasts there too. Terminals have no inertia of
+  their own and always coast.
 - Scroll speed follows `input:touchpad:scroll_factor` and `input:scroll_factor`.
 
 ## Options
@@ -25,9 +27,11 @@ sends the window under the pointer a few more scroll frames.
 |---|---|---|
 | `plugin:inertia:touchpad` | `true` | coast after a two-finger touchpad scroll |
 | `plugin:inertia:mouse` | `false` | coast after a fast mouse-wheel spin |
+| `plugin:inertia:coast` | `800` | longest coast in ms, 0 to 3000; a longer coast also carries further (0 = no coast) |
+| `plugin:inertia:all_apps` | `false` | also coast after touchpad flicks in browsers |
 
 ```lua
-hl.config({ plugin = { inertia = { mouse = true } } })
+hl.config({ plugin = { inertia = { mouse = true, coast = 1000 } } })
 ```
 
 Like any plugin option, they return to these defaults on every config reload,
